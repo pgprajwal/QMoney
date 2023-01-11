@@ -100,7 +100,17 @@ public class PortfolioManagerApplication {
     String filename = args[0];
     List<PortfolioTrade> trades = readTradesFromJson(filename);
     List<TotalReturnsDto> sortedByValue = mainReadQuotesHelper(args, trades);
-    Collections.sort(sortedByValue, TotalReturnsDto.closingComparator);
+    //Sorting the list in ascending order of their closing price
+    Collections.sort(sortedByValue, new Comparator<TotalReturnsDto>(){
+      @Override
+      public int compare(TotalReturnsDto t1 , TotalReturnsDto t2) {
+        // TODO Auto-generated method stub
+        if(t1.getClosingPrice() > t2.getClosingPrice())
+          return 1;
+    
+        return -1;
+      }
+    });
     List<String> stocks = new ArrayList<>();
 
     for(TotalReturnsDto t : sortedByValue)
