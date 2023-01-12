@@ -57,6 +57,14 @@ public class PortfolioManagerApplication {
     return symbols;
   }
 
+
+
+  // TODO: CRIO_TASK_MODULE_CALCULATIONS
+  //  Now that you have the list of PortfolioTrade and their data, calculate annualized returns
+  //  for the stocks provided in the Json.
+  //  Use the function you just wrote #calculateAnnualizedReturns.
+  //  Return the list of AnnualizedReturns sorted by annualizedReturns in descending order.
+
   // Note:
   // 1. You may need to copy relevant code from #mainReadQuotes to parse the Json.
   // 2. Remember to get the latest quotes from Tiingo API.
@@ -119,6 +127,129 @@ public class PortfolioManagerApplication {
     return stocks;
  }
 
+    // TODO:
+    //  Ensure all tests are passing using below command
+    //  ./gradlew test --tests ModuleThreeRefactorTest
+    static Double getOpeningPriceOnStartDate(List<Candle> candles) {
+      Double buyPrice = candles.get(0).getOpen();
+      return buyPrice;
+  }
+
+
+  public static Double getClosingPriceOnEndDate(List<Candle> candles) {
+      Double sellPrice = candles.get(candles.size() - 1).getClose();
+      return sellPrice;
+  }
+
+
+  public static List<Candle> fetchCandles(PortfolioTrade trade, LocalDate endDate, String token) 
+  {
+      String url = prepareUrl(trade, endDate, token);
+      RestTemplate restTemplate = new RestTemplate();
+      TiingoCandle[] results = restTemplate.getForObject(url, TiingoCandle[].class);
+      List<Candle> candles = new ArrayList<>();
+
+      if(results != null)
+        candles = Arrays.asList(results);
+
+      return candles;
+  }
+
+  public static String getToken()
+  {
+    return "de3846e16619e7c4a23ef0ea6f4ea5cf86dac498";
+  }
+
+  // TODO:
+  //  Build the Url using given parameters and use this function in your code to cann the API.
+  public static String prepareUrl(PortfolioTrade trade, LocalDate endDate, String token) 
+  {
+    String url = "https://api.tiingo.com/tiingo/daily/" + trade.getSymbol() + "/prices?startDate="
+    + trade.getPurchaseDate().toString() + "&endDate=" + endDate.toString() + "&token=" + token;
+     return url;
+  }
+
+  public static List<AnnualizedReturn> mainCalculateSingleReturn(String[] args)
+      throws IOException, URISyntaxException 
+  {
+      String filename = args[0];
+      LocalDate endDate = LocalDate.parse(args[1]);
+      String token = getToken();
+      List<PortfolioTrade> trades = readTradesFromJson(filename);
+      List<AnnualizedReturn> annualReturnsList = new ArrayList<>();
+
+
+      for(PortfolioTrade t : trades)
+      {
+        List<Candle> candleList = fetchCandles(t, endDate, token);
+        Double buyPrice = getOpeningPriceOnStartDate(candleList);
+        Double sellPrice = getClosingPriceOnEndDate(candleList);
+        AnnualizedReturn annualReturns = calculateAnnualizedReturns(endDate, t, buyPrice, sellPrice);
+        annualReturnsList.add(annualReturns);
+      }
+
+      //Sorting the annualReturnsList according to the annualizedReturns in descending order
+      Collections.sort(annualReturnsList, new Comparator<AnnualizedReturn>() {
+
+        @Override
+        public int compare(AnnualizedReturn a1, AnnualizedReturn a2) {
+          // TODO Auto-generated method stub
+          if(a1.getAnnualizedReturn() < a2.getAnnualizedReturn())
+            return 1;
+
+          return -1;
+        }
+        
+      });
+
+      return annualReturnsList;
+  }
+
+  // TODO: CRIO_TASK_MODULE_CALCULATIONS
+  //  Return the populated list of AnnualizedReturn for all stocks.
+  //  Annualized returns should be calculated in two steps:
+  //   1. Calculate totalReturn = (sell_value - buy_value) / buy_value.
+  //      1.1 Store the same as totalReturns
+  //   2. Calculate extrapolated annualized returns by scaling the same in years span.
+  //      The formula is:
+  //      annualized_returns = (1 + total_returns) ^ (1 / total_num_years) - 1
+  //      2.1 Store the same as annualized_returns
+  //  Test the same using below specified command. The build should be successful.
+  //     ./gradlew test --tests PortfolioManagerApplicationTest.testCalculateAnnualizedReturn
+
+
+    public static long calculateNoOfDays(LocalDate startDate, LocalDate endDate)
+    {
+        long noOfDays = ChronoUnit.DAYS.between(startDate, endDate);
+        return noOfDays;
+    }
+
+    public static double calculateNoOfYears(long days)
+    {
+        return days/365.0;
+    }
+
+    public static double calculateTotalReturns(double buyPrice, double sellPrice)
+    {
+        double result = (sellPrice - buyPrice) / buyPrice;
+        return result;
+    }
+
+
+  public static AnnualizedReturn calculateAnnualizedReturns(LocalDate endDate,
+      PortfolioTrade trade, Double buyPrice, Double sellPrice) 
+  {
+      LocalDate startDate = trade.getPurchaseDate();
+      long days = calculateNoOfDays(startDate, endDate);
+      double years = calculateNoOfYears(days);
+      double totalReturns = calculateTotalReturns(buyPrice, sellPrice);
+      double annualReturns;
+
+      annualReturns = Math.pow((1 + totalReturns), (1/years)) - 1;
+
+      return new AnnualizedReturn(trade.getSymbol(), annualReturns, totalReturns);
+  }
+
   private static void printJsonObject(Object object) throws IOException {
     Logger logger = Logger.getLogger(PortfolioManagerApplication.class.getCanonicalName());
     ObjectMapper mapper = new ObjectMapper();
@@ -152,15 +283,6 @@ public class PortfolioManagerApplication {
 
     return listOfTrades;
   }
-
-  // TODO:
-  //  Build the Url using given parameters and use this function in your code to cann the API.
-  public static String prepareUrl(PortfolioTrade trade, LocalDate endDate, String token) {
-    String url = "https://api.tiingo.com/tiingo/daily/" + trade.getSymbol() + "/prices?startDate="
-    + trade.getPurchaseDate().toString() + "&endDate=" + endDate.toString() + "&token=" + token;
-     return url;
-  }
-
 
   // TODO: CRIO_TASK_MODULE_JSON_PARSING
   //  Follow the instructions provided in the task documentation and fill up the correct values for
@@ -204,14 +326,11 @@ public class PortfolioManagerApplication {
         lineNumberFromTestFileInStackTrace});
   }
 
-
   public static void main(String[] args) throws Exception {
     Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler());
     ThreadContext.put("runId", UUID.randomUUID().toString());
 
-
-    printJsonObject(mainReadQuotes(args));
-
+    printJsonObject(mainCalculateSingleReturn(args));
 
   }
 }

@@ -62,7 +62,6 @@ public class PortfolioTrade {
     return "PortfolioTrade [purchaseDate=" + purchaseDate + ", quantity=" + quantity + ", symbol="
         + symbol + ", tradeType=" + tradeType + "]";
   }
-
   
   //solution
 
