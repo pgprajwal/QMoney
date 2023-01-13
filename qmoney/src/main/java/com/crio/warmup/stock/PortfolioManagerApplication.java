@@ -57,8 +57,6 @@ public class PortfolioManagerApplication {
     return symbols;
   }
 
-
-
   // TODO: CRIO_TASK_MODULE_CALCULATIONS
   //  Now that you have the list of PortfolioTrade and their data, calculate annualized returns
   //  for the stocks provided in the Json.
