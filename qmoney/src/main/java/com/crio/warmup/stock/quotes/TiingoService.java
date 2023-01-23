@@ -31,12 +31,20 @@ public class TiingoService implements StockQuotesService {
     return uri;
   }
 
+  private static ObjectMapper getObjectMapper() {
+    ObjectMapper objectMapper = new ObjectMapper();
+    objectMapper.registerModule(new JavaTimeModule());
+    return objectMapper;
+  }
+
   @Override
   public List<Candle> getStockQuote(String symbol, LocalDate startDate, LocalDate endDate)
       throws JsonProcessingException {
     // TODO Auto-generated method stub
     String uri = buildUri(symbol, startDate, endDate);
-    TiingoCandle[] results = restTemplate.getForObject(uri, TiingoCandle[].class);
+    String apiResponse = restTemplate.getForObject(uri, String.class);
+    ObjectMapper objectMapper = getObjectMapper();
+    TiingoCandle[] results = objectMapper.readValue(apiResponse, TiingoCandle[].class);
     List<Candle> candles = new ArrayList<>();
 
     if (results != null)

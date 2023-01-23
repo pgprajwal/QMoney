@@ -8,11 +8,8 @@ import java.time.LocalDate;
 import java.util.List;
 
 public interface PortfolioManager {
-
-
   //CHECKSTYLE:OFF
-
-
+  
   List<AnnualizedReturn> calculateAnnualizedReturn(List<PortfolioTrade> portfolioTrades,
       LocalDate endDate) throws JsonProcessingException ;
 }

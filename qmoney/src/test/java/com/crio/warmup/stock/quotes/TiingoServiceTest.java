@@ -10,10 +10,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeast;
 
 import com.crio.warmup.stock.dto.Candle;
-import com.crio.warmup.stock.dto.TiingoCandle;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.net.URI;
 import java.time.LocalDate;
 import java.util.Collections;
@@ -57,8 +54,8 @@ class TiingoServiceTest {
   @Test
   @MockitoSettings(strictness = Strictness.LENIENT)
   void getStockQuoteSingle() throws Exception {
-    Mockito.doReturn(getCandles(sampleTiingoResponse))
-        .when(restTemplate).getForObject(anyString(), eq(TiingoCandle[].class));
+    Mockito.doReturn(sampleTiingoResponse)
+        .when(restTemplate).getForObject(anyString(), eq(String.class));
 
     List<Candle> candles = tiingoService
         .getStockQuote("GOOGL",
@@ -85,11 +82,4 @@ class TiingoServiceTest {
         .isEmpty());
 
   }
-
-  private TiingoCandle[] getCandles(String responseText) throws JsonProcessingException {
-    ObjectMapper mapper = new ObjectMapper();
-    mapper.registerModule(new JavaTimeModule());
-    return mapper.readValue(responseText, TiingoCandle[].class);
-  }
-
 }
