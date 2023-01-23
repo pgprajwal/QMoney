@@ -333,15 +333,17 @@ public class PortfolioManagerApplication {
     List<PortfolioTrade> portfolioTrades = readTradesFromJson(file);
     
     //Create an instance of PortfolioManagerImpl using Factory Design Pattern
-    PortfolioManager portfolioManager = PortfolioManagerFactory.getPortfolioManager(new RestTemplate());
+    PortfolioManager portfolioManager = PortfolioManagerFactory.getPortfolioManager("tiingo", new RestTemplate());
     return portfolioManager.calculateAnnualizedReturn(portfolioTrades, endDate);
   }
 
 
+  
   public static void main(String[] args) throws Exception {
     Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler());
     ThreadContext.put("runId", UUID.randomUUID().toString());
-    // printJsonObject(mainCalculateReturnsAfterRefactor(args));
+    printJsonObject(mainCalculateReturnsAfterRefactor(args));
+
   }
 }
 

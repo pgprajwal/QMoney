@@ -8,6 +8,7 @@ import com.crio.warmup.stock.dto.AnnualizedReturn;
 import com.crio.warmup.stock.dto.Candle;
 import com.crio.warmup.stock.dto.PortfolioTrade;
 import com.crio.warmup.stock.dto.TiingoCandle;
+import com.crio.warmup.stock.quotes.StockQuotesService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -29,11 +30,20 @@ import org.springframework.web.client.RestTemplate;
 public class PortfolioManagerImpl implements PortfolioManager {
 
   private RestTemplate restTemplate;
+  private StockQuotesService stockQuotesService;
 
   // Caution: Do not delete or modify the constructor, or else your build will break!
   // This is absolutely necessary for backward compatibility
+  
+  // Module 5 uses the below constructor
+  @Deprecated
   protected PortfolioManagerImpl(RestTemplate restTemplate) {
     this.restTemplate = restTemplate;
+  }
+
+  // Module 6 uses the below constructor
+  protected PortfolioManagerImpl(StockQuotesService stockQuotesService) {
+    this.stockQuotesService = stockQuotesService;
   }
 
 
@@ -47,14 +57,6 @@ public class PortfolioManagerImpl implements PortfolioManager {
   // Note:
   // Make sure to exercise the tests inside PortfolioManagerTest using command below:
   // ./gradlew test --tests PortfolioManagerTest
-
-  // CHECKSTYLE:OFF
-
-
-
-  // private Comparator<AnnualizedReturn> getComparator() {
-  //   return Comparator.comparing(AnnualizedReturn::getAnnualizedReturn).reversed();
-  // }
 
   // CHECKSTYLE:OFF
 
@@ -92,8 +94,6 @@ public class PortfolioManagerImpl implements PortfolioManager {
   }
 
   protected String buildUri(String symbol, LocalDate startDate, LocalDate endDate) {
-    // String uriTemplate = "https:api.tiingo.com/tiingo/daily/$SYMBOL/prices?"
-    // + "startDate=$STARTDATE&endDate=$ENDDATE&token=$APIKEY";
     String token = getToken();
     String uri = "https://api.tiingo.com/tiingo/daily/" + symbol + "/prices?startDate="
         + startDate.toString() + "&endDate=" + endDate.toString() + "&token=" + token;
@@ -133,7 +133,6 @@ public class PortfolioManagerImpl implements PortfolioManager {
   public List<AnnualizedReturn> calculateAnnualizedReturn(List<PortfolioTrade> portfolioTrades,
       LocalDate endDate) throws JsonProcessingException {
     // TODO Auto-generated method stub
-    String token = getToken();
     List<AnnualizedReturn> annualReturnsList = new ArrayList<>();
 
 
@@ -141,7 +140,7 @@ public class PortfolioManagerImpl implements PortfolioManager {
       // List<Candle> candleList = fetchCandles(trade, endDate, token);
       String symbol = trade.getSymbol();
       LocalDate startDate = trade.getPurchaseDate();
-      List<Candle> candleList = getStockQuote(symbol, startDate, endDate);
+      List<Candle> candleList = stockQuotesService.getStockQuote(symbol, startDate, endDate);
       Double buyPrice = getOpeningPriceOnStartDate(candleList);
       Double sellPrice = getClosingPriceOnEndDate(candleList);
       AnnualizedReturn annualReturns =
@@ -165,4 +164,22 @@ public class PortfolioManagerImpl implements PortfolioManager {
 
     return annualReturnsList;
   }
+
+
+
+
+
+
+  private Comparator<AnnualizedReturn> getComparator() {
+    return Comparator.comparing(AnnualizedReturn::getAnnualizedReturn).reversed();
+  }
+
+
+
+  // ¶TODO: CRIO_TASK_MODULE_ADDITIONAL_REFACTOR
+  //  Modify the function #getStockQuote and start delegating to calls to
+  //  stockQuoteService provided via newly added constructor of the class.
+  //  You also have a liberty to completely get rid of that function itself, however, make sure
+  //  that you do not delete the #getStockQuote function.
+
 }
