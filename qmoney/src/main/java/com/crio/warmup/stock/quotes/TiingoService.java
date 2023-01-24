@@ -31,7 +31,7 @@ public class TiingoService implements StockQuotesService {
     return uri;
   }
 
-  private static ObjectMapper getObjectMapper() {
+  private ObjectMapper getObjectMapper() {
     ObjectMapper objectMapper = new ObjectMapper();
     objectMapper.registerModule(new JavaTimeModule());
     return objectMapper;

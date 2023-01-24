@@ -50,12 +50,21 @@ public class AlphavantageService implements StockQuotesService {
     return alphavantageCandles;
   }
 
+  private ObjectMapper getObjectMapper() {
+    ObjectMapper objectMapper = new ObjectMapper();
+    objectMapper.registerModule(new JavaTimeModule());
+    return objectMapper;
+  }
+
   @Override
   public List<Candle> getStockQuote(String symbol, LocalDate startDate, LocalDate endDate)
       throws JsonProcessingException {
     // TODO Auto-generated method stub
     String url = buildUrl(symbol);
-    AlphavantageDailyResponse obj = restTemplate.getForObject(url, AlphavantageDailyResponse.class);
+    // AlphavantageDailyResponse obj = restTemplate.getForObject(url, AlphavantageDailyResponse.class);
+    String apiResponse = restTemplate.getForObject(url, String.class);
+    ObjectMapper objectMapper = getObjectMapper();
+    AlphavantageDailyResponse obj = objectMapper.readValue(apiResponse, AlphavantageDailyResponse.class);
     Map<LocalDate, AlphavantageCandle> candles = obj.getCandles();
     
     return getAlphavantageCandles(candles, startDate, endDate);
