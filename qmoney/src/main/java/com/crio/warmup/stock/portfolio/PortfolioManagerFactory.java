@@ -41,6 +41,7 @@ public class PortfolioManagerFactory {
     PortfolioManager portfolioManager = new PortfolioManagerImpl(stockQuotesService);
 
     return portfolioManager;
+
   }
 
 }

@@ -8,6 +8,7 @@ import com.crio.warmup.stock.dto.AnnualizedReturn;
 import com.crio.warmup.stock.dto.Candle;
 import com.crio.warmup.stock.dto.PortfolioTrade;
 import com.crio.warmup.stock.dto.TiingoCandle;
+import com.crio.warmup.stock.exception.StockQuoteServiceException;
 import com.crio.warmup.stock.quotes.StockQuotesService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -64,7 +65,8 @@ public class PortfolioManagerImpl implements PortfolioManager {
   // Extract the logic to call Tiingo third-party APIs to a separate function.
   // Remember to fill out the buildUri function and use that.
 
-
+  // The below enclosed code is not required in module 6 (it's used in module 5)
+  //-----------------------------------Not used in module 6 (start)--------------------------------
   public List<Candle> getStockQuote(String symbol, LocalDate startDate, LocalDate endDate)
       throws JsonProcessingException {
 
@@ -82,22 +84,23 @@ public class PortfolioManagerImpl implements PortfolioManager {
     return "de3846e16619e7c4a23ef0ea6f4ea5cf86dac498";
   }
 
-  private Double getOpeningPriceOnStartDate(List<Candle> candles) {
-    Double buyPrice = candles.get(0).getOpen();
-    return buyPrice;
-  }
-
-
-  private Double getClosingPriceOnEndDate(List<Candle> candles) {
-    Double sellPrice = candles.get(candles.size() - 1).getClose();
-    return sellPrice;
-  }
-
   protected String buildUri(String symbol, LocalDate startDate, LocalDate endDate) {
     String token = getToken();
     String uri = "https://api.tiingo.com/tiingo/daily/" + symbol + "/prices?startDate="
         + startDate.toString() + "&endDate=" + endDate.toString() + "&token=" + token;
     return uri;
+  }
+  //-----------------------------------Not used in module 6 (end)----------------------------------
+
+
+  private Double getOpeningPriceOnStartDate(List<Candle> candles) {
+    Double buyPrice = candles.get(0).getOpen();
+    return buyPrice;
+  }
+
+  private Double getClosingPriceOnEndDate(List<Candle> candles) {
+    Double sellPrice = candles.get(candles.size() - 1).getClose();
+    return sellPrice;
   }
 
   private long calculateNoOfDays(LocalDate startDate, LocalDate endDate) {
@@ -131,13 +134,12 @@ public class PortfolioManagerImpl implements PortfolioManager {
 
   @Override
   public List<AnnualizedReturn> calculateAnnualizedReturn(List<PortfolioTrade> portfolioTrades,
-      LocalDate endDate) throws JsonProcessingException {
+      LocalDate endDate) throws StockQuoteServiceException, JsonProcessingException{
     // TODO Auto-generated method stub
     List<AnnualizedReturn> annualReturnsList = new ArrayList<>();
 
 
     for (PortfolioTrade trade : portfolioTrades) {
-      // List<Candle> candleList = fetchCandles(trade, endDate, token);
       String symbol = trade.getSymbol();
       LocalDate startDate = trade.getPurchaseDate();
       List<Candle> candleList = stockQuotesService.getStockQuote(symbol, startDate, endDate);
