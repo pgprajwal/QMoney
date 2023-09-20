@@ -20,6 +20,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -151,18 +152,7 @@ public class PortfolioManagerImpl implements PortfolioManager {
     }
 
     // Sorting the annualReturnsList according to the annualizedReturns in descending order
-    Collections.sort(annualReturnsList, new Comparator<AnnualizedReturn>() {
-
-      @Override
-      public int compare(AnnualizedReturn a1, AnnualizedReturn a2) {
-        // TODO Auto-generated method stub
-        if (a1.getAnnualizedReturn() < a2.getAnnualizedReturn())
-          return 1;
-
-        return -1;
-      }
-
-    });
+    sortAnnualizedReturnsList(annualReturnsList);
 
     return annualReturnsList;
   }
@@ -172,4 +162,66 @@ public class PortfolioManagerImpl implements PortfolioManager {
   //  You also have a liberty to completely get rid of that function itself, however, make sure
   //  that you do not delete the #getStockQuote function.
 
+  @Override
+  public List<AnnualizedReturn> calculateAnnualizedReturnParallel(
+      List<PortfolioTrade> portfolioTrades, LocalDate endDate, int numThreads)
+      throws InterruptedException, StockQuoteServiceException {
+
+    ExecutorService executorService = Executors.newFixedThreadPool(numThreads);
+
+    List<Future<AnnualizedReturn>> futures = createAndSubmitPortfolioManagerTasks(executorService, portfolioTrades, endDate);
+
+    List<AnnualizedReturn> annualizedReturns = getAnnualizedReturns(futures);
+    
+    executorService.shutdown();
+    sortAnnualizedReturnsList(annualizedReturns);
+    return annualizedReturns;
+  }
+
+  private List<Future<AnnualizedReturn>> createAndSubmitPortfolioManagerTasks(ExecutorService executorService, List<PortfolioTrade> portfolioTrades, LocalDate endDate) {
+    List<Future<AnnualizedReturn>> futures = new ArrayList<>();
+
+    for(PortfolioTrade portfolioTrade : portfolioTrades) {
+      PortfolioManagerTask portfolioManagerTask = new PortfolioManagerTask(portfolioTrade, stockQuotesService, endDate);
+      Future<AnnualizedReturn> future = executorService.submit(portfolioManagerTask);
+      futures.add(future);
+    }
+
+    return futures;
+  }
+
+  private List<AnnualizedReturn> getAnnualizedReturns(List<Future<AnnualizedReturn>> futures) throws StockQuoteServiceException, InterruptedException {
+    List<AnnualizedReturn> annualizedReturns = new ArrayList<>();
+
+    for(Future<AnnualizedReturn> future : futures) {
+      AnnualizedReturn annualizedReturn = null;
+      try {
+        annualizedReturn = future.get();
+      } catch (ExecutionException e) {
+        throw new StockQuoteServiceException("Failed to get data from service provider");
+      }
+
+      if(annualizedReturn != null)
+        annualizedReturns.add(annualizedReturn);
+    }
+
+    return annualizedReturns;
+  }
+
+  private void sortAnnualizedReturnsList(List<AnnualizedReturn> annualizedReturns) {
+    Collections.sort(annualizedReturns, new Comparator<AnnualizedReturn>() {
+
+      @Override
+      public int compare(AnnualizedReturn a1, AnnualizedReturn a2) {
+        // TODO Auto-generated method stub
+        if (a1.getAnnualizedReturn() < a2.getAnnualizedReturn())
+          return 1;
+
+        return -1;
+      }
+    });
+  }
+
 }
+
+

@@ -1,0 +1,9 @@
+BEFORE IMPLEMENTING MULTITHREADING
+Time required to analyse the user portfolio using the below command: 5.619s
+    time python3 dashboard.py --json module8-trades.json 
+
+AFTER IMPLEMENTING MULTITHREADING (with 6 threads)
+Time required to analyse the user portfolio using the below command: 3.888s
+    time python3 dashboard.py --json module8-trades.json
+
+Latency Improvement = 1.731s

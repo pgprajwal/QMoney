@@ -7,12 +7,19 @@ import com.crio.warmup.stock.exception.StockQuoteServiceException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 public interface PortfolioManager {
+
+  List<AnnualizedReturn> calculateAnnualizedReturnParallel(
+      List<PortfolioTrade> portfolioTrades,
+      LocalDate endDate, int numThreads) throws InterruptedException,
+      StockQuoteServiceException;
+
   //CHECKSTYLE:OFF
 
+
   List<AnnualizedReturn> calculateAnnualizedReturn(List<PortfolioTrade> portfolioTrades,
-      LocalDate endDate)
-      throws StockQuoteServiceException, JsonProcessingException;
+      LocalDate endDate) throws StockQuoteServiceException, JsonProcessingException;
 }
 

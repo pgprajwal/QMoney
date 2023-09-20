@@ -31,7 +31,7 @@ public class AlphavantageService implements StockQuotesService {
 
   private String buildUrl(String symbol) {
     String apiKey = getApiKey();
-    String url = "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&symbol="
+    String url = "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol="
         + symbol + "&outputsize=full&apikey=" + apiKey;
     return url;
   }
